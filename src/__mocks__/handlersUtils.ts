@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import { server } from '../setupTests';
-import { Event } from '../types';
+import { Event, EventForm } from '../types';
 
 // ! Hard 여기 제공 안함
 export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
@@ -16,6 +16,30 @@ export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
       newEvent.id = String(mockEvents.length + 1); // 간단한 ID 생성
       mockEvents.push(newEvent);
       return HttpResponse.json(newEvent, { status: 201 });
+    }),
+    http.post('/api/events-list', async ({ request }) => {
+      const body = (await request.json()) as Record<string, any>;
+      if (!body || !body.events) {
+        return new HttpResponse(null, { status: 400 });
+      }
+      const newEvents = body.events as EventForm[];
+
+      const repeatId = String(mockEvents.length + 1);
+      const processedEvents = newEvents.map((event: EventForm, index: number) => {
+        const isRepeatEvent = event.repeat?.type !== 'none';
+        return {
+          id: String(mockEvents.length + index + 1),
+          ...event,
+          repeat: {
+            ...event.repeat,
+            id: isRepeatEvent ? repeatId : undefined,
+          },
+        };
+      });
+
+      mockEvents.push(...processedEvents);
+
+      return HttpResponse.json(processedEvents, { status: 201 });
     })
   );
 };
