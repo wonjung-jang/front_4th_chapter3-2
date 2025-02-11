@@ -26,10 +26,51 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
     }
   };
 
+  const generateRecurringEvents = (eventData: EventForm) => {
+    const { type, interval, endDate } = eventData.repeat!;
+    const startDate = new Date(eventData.date);
+    const endRepeatDate = endDate ? new Date(endDate) : null;
+
+    let generatedEvents: EventForm[] = [];
+    let currentDate = new Date(startDate);
+
+    while (!endRepeatDate || currentDate <= endRepeatDate) {
+      generatedEvents.push({
+        ...eventData,
+        date: currentDate.toISOString().split('T')[0],
+      });
+
+      switch (type) {
+        case 'daily':
+          currentDate.setDate(currentDate.getDate() + interval);
+          break;
+        case 'weekly':
+          currentDate.setDate(currentDate.getDate() + interval * 7);
+          break;
+        case 'monthly':
+          currentDate.setMonth(currentDate.getMonth() + interval);
+          break;
+        case 'yearly':
+          currentDate.setFullYear(currentDate.getFullYear() + interval);
+          break;
+      }
+    }
+
+    return generatedEvents;
+  };
+
   const saveEvent = async (eventData: Event | EventForm) => {
     try {
       let response;
-      if (editing) {
+
+      if (eventData.repeat?.type && eventData.repeat.type !== 'none') {
+        const eventDataList = generateRecurringEvents(eventData);
+        response = await fetch('/api/events-list', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ events: eventDataList }),
+        });
+      } else if (editing) {
         response = await fetch(`/api/events/${(eventData as Event).id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
