@@ -1,5 +1,5 @@
 import { ChakraProvider } from '@chakra-ui/react';
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent, { UserEvent } from '@testing-library/user-event';
 import { ReactElement } from 'react';
 
@@ -15,7 +15,7 @@ const setup = (element: ReactElement) => {
 
 const saveSchedule = async (user: UserEvent, form: Omit<Event, 'id' | 'notificationTime'>) => {
   const { title, date, startTime, endTime, location, description, category, repeat } = form;
-  const { type, interval, endDate } = repeat;
+  const { type, interval, endCondition, endDate, count } = repeat;
 
   await user.click(screen.getAllByText('일정 추가')[0]);
 
@@ -32,9 +32,27 @@ const saveSchedule = async (user: UserEvent, form: Omit<Event, 'id' | 'notificat
   await user.clear(intervalInput);
   await user.type(intervalInput, interval.toString());
 
-  const endDateInput = screen.getByLabelText('반복 종료일');
-  await user.clear(endDateInput);
-  await user.type(endDateInput, endDate ?? '');
+  const endConditionSelect = screen.getByRole('radio', {
+    name:
+      endCondition === 'endDate'
+        ? '종료일 지정'
+        : endCondition === 'count'
+          ? '횟수 지정'
+          : '조건 없음',
+  });
+  await user.click(endConditionSelect);
+
+  if (endCondition === 'endDate') {
+    const endDateInput = screen.getByLabelText('반복 종료일');
+    await user.clear(endDateInput);
+    await user.type(endDateInput, endDate ?? '');
+  }
+
+  if (endCondition === 'count') {
+    const countInput = screen.getByLabelText('반복 종료 횟수');
+    await user.clear(countInput);
+    await user.type(countInput, count?.toString() ?? '');
+  }
 
   await user.click(screen.getByTestId('event-submit-button'));
 };
@@ -81,7 +99,11 @@ describe('반복 유형 선택', () => {
 });
 
 describe('반복 일정 생성', () => {
-  it('사용자가 매주 월요일 반복 일정을 생성할 수 있어야 한다.', async () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('사용자가 반복 조건을 종료일로 설정 후 반복 일정을 생성할 수 있어야 한다.', async () => {
     setupMockHandlerCreation();
     const { user } = setup(<App />);
 
@@ -96,6 +118,7 @@ describe('반복 일정 생성', () => {
       repeat: {
         type: 'weekly',
         interval: 1,
+        endCondition: 'endDate',
         endDate: '2024-12-31',
       },
     });
@@ -107,5 +130,34 @@ describe('반복 일정 생성', () => {
 
     expect(events.length).toBeGreaterThan(0);
     expect(repeatInfo.length).toBeGreaterThan(0);
+  });
+
+  it('사용자가 반복 조건을 횟수로 설정 후 반복 일정을 생성할 수 있어야 한다.', async () => {
+    setupMockHandlerCreation();
+    const { user } = setup(<App />);
+
+    await saveSchedule(user, {
+      title: '주간 팀 회의',
+      date: '2024-10-01',
+      startTime: '10:00',
+      endTime: '11:00',
+      location: '회의실 A',
+      description: '주간 업무 보고 및 계획 수립',
+      category: '업무',
+      repeat: {
+        type: 'weekly',
+        interval: 1,
+        endCondition: 'count',
+        count: 3,
+      },
+    });
+
+    const eventList = within(screen.getByTestId('event-list'));
+
+    const events = await eventList.findAllByText('주간 팀 회의');
+    const repeatInfo = await eventList.findAllByText('반복: 1주마다 (종료: 2024-10-15)');
+
+    expect(events.length).toBe(3);
+    expect(repeatInfo.length).toBe(3);
   });
 });
