@@ -1,5 +1,5 @@
 import { ChakraProvider } from '@chakra-ui/react';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent, { UserEvent } from '@testing-library/user-event';
 import { ReactElement } from 'react';
 
@@ -26,8 +26,10 @@ const saveSchedule = async (user: UserEvent, form: Omit<Event, 'id' | 'notificat
   await user.type(screen.getByLabelText('설명'), description);
   await user.type(screen.getByLabelText('위치'), location);
   await user.selectOptions(screen.getByLabelText('카테고리'), category);
-  await user.selectOptions(screen.getByLabelText('반복 유형'), type);
 
+  await user.click(screen.getByLabelText('반복 설정'));
+
+  await user.selectOptions(screen.getByLabelText('반복 유형'), type);
   const intervalInput = screen.getByLabelText('반복 간격');
   await user.clear(intervalInput);
   await user.type(intervalInput, interval.toString());
@@ -41,13 +43,11 @@ const saveSchedule = async (user: UserEvent, form: Omit<Event, 'id' | 'notificat
           : '조건 없음',
   });
   await user.click(endConditionSelect);
-
   if (endCondition === 'endDate') {
     const endDateInput = screen.getByLabelText('반복 종료일');
     await user.clear(endDateInput);
     await user.type(endDateInput, endDate ?? '');
   }
-
   if (endCondition === 'count') {
     const countInput = screen.getByLabelText('반복 종료 횟수');
     await user.clear(countInput);
@@ -99,10 +99,6 @@ describe('반복 유형 선택', () => {
 });
 
 describe('반복 일정 생성', () => {
-  afterEach(() => {
-    cleanup();
-  });
-
   it('사용자가 반복 조건을 종료일로 설정 후 반복 일정을 생성할 수 있어야 한다.', async () => {
     setupMockHandlerCreation();
     const { user } = setup(<App />);

@@ -73,8 +73,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
   const saveEvent = async (eventData: Event | EventForm) => {
     try {
       let response;
-
-      if (eventData.repeat?.type && eventData.repeat.type !== 'none') {
+      if (eventData.repeat?.type) {
         const eventDataList = generateRecurringEvents(eventData);
         response = await fetch('/api/events-list', {
           method: 'POST',
