@@ -16,6 +16,12 @@ export const useEventForm = (initialEvent?: Event) => {
   const [isRepeating, setIsRepeating] = useState(initialEvent?.repeat.type !== 'none');
   const [repeatType, setRepeatType] = useState<RepeatType>(initialEvent?.repeat.type || 'none');
   const [repeatInterval, setRepeatInterval] = useState(initialEvent?.repeat.interval || 1);
+  const [repeatEndCondition, setRepeatEndCondition] = useState<'endDate' | 'count' | 'never'>(
+    initialEvent?.repeat.endCondition || 'endDate'
+  );
+  const [repeatCount, setRepeatCount] = useState<number | undefined>(
+    initialEvent?.repeat.count || undefined
+  );
   const [repeatEndDate, setRepeatEndDate] = useState(initialEvent?.repeat.endDate || '');
   const [notificationTime, setNotificationTime] = useState(initialEvent?.notificationTime || 10);
 
@@ -49,7 +55,9 @@ export const useEventForm = (initialEvent?: Event) => {
     setIsRepeating(false);
     setRepeatType('none');
     setRepeatInterval(1);
+    setRepeatCount(undefined);
     setRepeatEndDate('');
+    setRepeatEndCondition('endDate');
     setNotificationTime(10);
   };
 
@@ -65,7 +73,9 @@ export const useEventForm = (initialEvent?: Event) => {
     setIsRepeating(event.repeat.type !== 'none');
     setRepeatType(event.repeat.type);
     setRepeatInterval(event.repeat.interval);
+    setRepeatEndCondition(event.repeat.endCondition);
     setRepeatEndDate(event.repeat.endDate || '');
+    setRepeatCount(event.repeat.count);
     setNotificationTime(event.notificationTime);
   };
 
@@ -92,6 +102,10 @@ export const useEventForm = (initialEvent?: Event) => {
     setRepeatInterval,
     repeatEndDate,
     setRepeatEndDate,
+    repeatCount,
+    setRepeatCount,
+    repeatEndCondition,
+    setRepeatEndCondition,
     notificationTime,
     setNotificationTime,
     startTimeError,

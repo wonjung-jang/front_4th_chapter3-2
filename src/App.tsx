@@ -26,6 +26,8 @@ import {
   HStack,
   IconButton,
   Input,
+  Radio,
+  RadioGroup,
   Select,
   Table,
   Tbody,
@@ -91,6 +93,10 @@ function App() {
     setRepeatInterval,
     repeatEndDate,
     setRepeatEndDate,
+    repeatCount,
+    setRepeatCount,
+    repeatEndCondition,
+    setRepeatEndCondition,
     notificationTime,
     setNotificationTime,
     startTimeError,
@@ -150,7 +156,9 @@ function App() {
       repeat: {
         type: isRepeating ? repeatType : 'none',
         interval: repeatInterval,
+        endCondition: repeatEndCondition,
         endDate: repeatEndDate || undefined,
+        count: repeatCount,
       },
       notificationTime,
     };
@@ -258,12 +266,15 @@ function App() {
                           )}
                           {getEventsForDay(filteredEvents, day).map((event) => {
                             const isNotified = notifiedEvents.includes(event.id);
+                            const isRepeating = event.repeat.type !== 'none';
                             return (
                               <Box
                                 key={event.id}
                                 p={1}
                                 my={1}
-                                bg={isNotified ? 'red.100' : 'gray.100'}
+                                bg={
+                                  isNotified ? 'red.100' : isRepeating ? 'orange.100' : 'gray.100'
+                                }
                                 borderRadius="md"
                                 fontWeight={isNotified ? 'bold' : 'normal'}
                                 color={isNotified ? 'red.500' : 'inherit'}
@@ -390,16 +401,30 @@ function App() {
                   <option value="yearly">매년</option>
                 </Select>
               </FormControl>
-              <HStack width="100%">
-                <FormControl>
-                  <FormLabel>반복 간격</FormLabel>
-                  <Input
-                    type="number"
-                    value={repeatInterval}
-                    onChange={(e) => setRepeatInterval(Number(e.target.value))}
-                    min={1}
-                  />
-                </FormControl>
+              <FormControl>
+                <FormLabel>반복 간격</FormLabel>
+                <Input
+                  type="number"
+                  value={repeatInterval}
+                  onChange={(e) => setRepeatInterval(Number(e.target.value))}
+                  min={1}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel id="repeat-end-condition-label">반복 종료 조건</FormLabel>
+                <RadioGroup
+                  aria-labelledby="repeat-end-condition-label"
+                  value={repeatEndCondition}
+                  onChange={(value) =>
+                    setRepeatEndCondition(value as 'endDate' | 'count' | 'never')
+                  }
+                >
+                  <Radio value="endDate">종료일 지정</Radio>
+                  <Radio value="count">횟수 지정</Radio>
+                  <Radio value="never">조건 없음</Radio>
+                </RadioGroup>
+              </FormControl>
+              {repeatEndCondition === 'endDate' && (
                 <FormControl>
                   <FormLabel>반복 종료일</FormLabel>
                   <Input
@@ -408,7 +433,17 @@ function App() {
                     onChange={(e) => setRepeatEndDate(e.target.value)}
                   />
                 </FormControl>
-              </HStack>
+              )}
+              {repeatEndCondition === 'count' && (
+                <FormControl>
+                  <FormLabel>반복 종료 횟수</FormLabel>
+                  <Input
+                    type="number"
+                    value={repeatCount}
+                    onChange={(e) => setRepeatCount(Number(e.target.value))}
+                  />
+                </FormControl>
+              )}
             </VStack>
           )}
 
@@ -558,7 +593,9 @@ function App() {
                     repeat: {
                       type: isRepeating ? repeatType : 'none',
                       interval: repeatInterval,
+                      endCondition: repeatEndCondition,
                       endDate: repeatEndDate || undefined,
+                      count: repeatCount || undefined,
                     },
                     notificationTime,
                   });
