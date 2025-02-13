@@ -90,7 +90,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
           body: JSON.stringify(eventData),
         });
       } else {
-        if (eventData.repeat?.type) {
+        if (eventData.repeat?.type && eventData.repeat?.type !== 'none') {
           const eventDataList = generateRecurringEvents(eventData);
           response = await fetch('/api/events-list', {
             method: 'POST',
