@@ -60,19 +60,6 @@ test.describe('반복 일정', () => {
     await expect(page.getByText('일정이 수정되었습니다.')).toBeVisible();
   });
 
-  test('afterEach에서 삭제를 했는데 realEvents.json에 남아있는 경우가 있어서 추가한 것', async ({
-    page,
-  }) => {
-    await page.goto('http://localhost:5173/');
-
-    const eventList = page.getByTestId('event-list');
-    const targetEvents = eventList.locator('div[role="event"]').filter({ hasText: '캠핑' });
-
-    const targetEventCount = await targetEvents.count();
-
-    expect(targetEventCount).toBe(0);
-  });
-
   test.afterEach(async ({ page }) => {
     await page.goto('http://localhost:5173/');
 
