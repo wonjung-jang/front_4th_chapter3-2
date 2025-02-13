@@ -180,8 +180,6 @@ describe('반복 일정 수정', () => {
     const eventList = within(screen.getByTestId('event-list'));
     const updatedEvent = eventList.getByText('반복 일정 아니지롱').closest('div[role="event"]');
 
-    screen.debug(updatedEvent as HTMLElement);
-
     expect(updatedEvent).not.toBeNull();
     expect(within(updatedEvent as HTMLElement).getByText('단일 일정이지롱')).toBeInTheDocument();
     expect(
