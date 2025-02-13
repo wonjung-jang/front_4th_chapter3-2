@@ -1,40 +1,90 @@
 import { expect, test } from '@playwright/test';
 
-test('반복 일정 생성', async ({ page }) => {
-  await page.goto('http://localhost:5173/');
-  await page.getByRole('textbox', { name: '제목' }).fill('캠핑');
+test.describe('반복 일정', () => {
+  test('반복 일정 생성', async ({ page }) => {
+    await page.goto('http://localhost:5173/');
+    await page.getByRole('textbox', { name: '제목' }).fill('캠핑');
 
-  await page.getByRole('textbox', { name: '날짜' }).fill('2025-02-01');
-  await page.getByRole('textbox', { name: '시작 시간' }).fill('10:00');
-  await page.getByRole('textbox', { name: '종료 시간' }).fill('11:00');
+    await page.getByRole('textbox', { name: '날짜' }).fill('2025-02-01');
+    await page.getByRole('textbox', { name: '시작 시간' }).fill('10:00');
+    await page.getByRole('textbox', { name: '종료 시간' }).fill('11:00');
 
-  await page.getByRole('textbox', { name: '설명' }).fill('굴업도 2박3일 백패킹');
+    await page.getByRole('textbox', { name: '설명' }).fill('굴업도 2박3일 백패킹');
 
-  await page.getByRole('textbox', { name: '위치' }).fill('굴업도');
+    await page.getByRole('textbox', { name: '위치' }).fill('굴업도');
 
-  await page.getByRole('combobox', { name: '카테고리' }).selectOption('개인');
+    await page.getByRole('combobox', { name: '카테고리' }).selectOption('개인');
 
-  await page.locator('span').first().click();
+    await page.locator('span').first().click();
 
-  await page.getByRole('combobox', { name: '반복 유형' }).selectOption('매일');
-  await page.getByRole('textbox', { name: '반복 종료일' }).fill('2025-02-03');
+    await page.getByRole('combobox', { name: '반복 유형' }).selectOption('매일');
+    await page.getByRole('textbox', { name: '반복 종료일' }).fill('2025-02-03');
 
-  await page.getByTestId('event-submit-button').click();
+    await page.getByTestId('event-submit-button').click();
 
-  await expect(page.getByText('일정이 추가되었습니다.')).toBeVisible();
-});
+    await expect(page.getByText('일정이 추가되었습니다.')).toBeVisible();
+  });
 
-test.afterEach(async ({ page }) => {
-  await page.goto('http://localhost:5173/');
+  test('반복 일정 수정', async ({ page }) => {
+    await page.goto('http://localhost:5173/');
+    await page.getByRole('textbox', { name: '제목' }).fill('캠핑');
 
-  const eventList = page.getByTestId('event-list');
-  const targetEvents = eventList.locator('div[role="event"]').filter({ hasText: '캠핑' });
+    await page.getByRole('textbox', { name: '날짜' }).fill('2025-02-01');
+    await page.getByRole('textbox', { name: '시작 시간' }).fill('10:00');
+    await page.getByRole('textbox', { name: '종료 시간' }).fill('11:00');
 
-  const targetEventCount = await targetEvents.count();
+    await page.getByRole('textbox', { name: '설명' }).fill('굴업도 2박3일 백패킹');
 
-  for (let i = targetEventCount - 1; i >= 0; i--) {
-    const event = targetEvents.nth(i);
-    const deleteButton = event.locator('button[aria-label="Delete event"]');
-    await deleteButton.click();
-  }
+    await page.getByRole('textbox', { name: '위치' }).fill('굴업도');
+
+    await page.getByRole('combobox', { name: '카테고리' }).selectOption('개인');
+
+    await page.locator('span').first().click();
+
+    await page.getByRole('combobox', { name: '반복 유형' }).selectOption('매일');
+    await page.getByRole('textbox', { name: '반복 종료일' }).fill('2025-02-03');
+
+    await page.getByTestId('event-submit-button').click();
+
+    const eventList = page.getByTestId('event-list');
+    const events = eventList.locator('div[role="event"]').filter({ hasText: '캠핑' });
+    const event = events.nth(0);
+    const editButton = event.locator('button[aria-label="Edit event"]');
+    await editButton.click();
+
+    await page.getByRole('textbox', { name: '설명' }).fill('선자령 2박3일 백패킹');
+    await page.getByRole('textbox', { name: '위치' }).fill('선자령');
+
+    await page.getByTestId('event-submit-button').click();
+
+    await expect(page.getByText('일정이 수정되었습니다.')).toBeVisible();
+  });
+
+  test('afterEach에서 삭제를 했는데 realEvents.json에 남아있는 경우가 있어서 추가한 것', async ({
+    page,
+  }) => {
+    await page.goto('http://localhost:5173/');
+
+    const eventList = page.getByTestId('event-list');
+    const targetEvents = eventList.locator('div[role="event"]').filter({ hasText: '캠핑' });
+
+    const targetEventCount = await targetEvents.count();
+
+    expect(targetEventCount).toBe(0);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await page.goto('http://localhost:5173/');
+
+    const eventList = page.getByTestId('event-list');
+    const targetEvents = eventList.locator('div[role="event"]').filter({ hasText: '캠핑' });
+
+    const targetEventCount = await targetEvents.count();
+
+    for (let i = targetEventCount - 1; i >= 0; i--) {
+      const event = targetEvents.nth(i);
+      const deleteButton = event.locator('button[aria-label="Delete event"]');
+      await deleteButton.click();
+    }
+  });
 });
