@@ -494,7 +494,7 @@ function App() {
             <Text>검색 결과가 없습니다.</Text>
           ) : (
             filteredEvents.map((event) => (
-              <Box key={event.id} borderWidth={1} borderRadius="lg" p={3} width="100%">
+              <Box key={event.id} borderWidth={1} borderRadius="lg" p={3} width="100%" role="event">
                 <HStack justifyContent="space-between">
                   <VStack align="start">
                     <HStack>

@@ -73,25 +73,37 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
   const saveEvent = async (eventData: Event | EventForm) => {
     try {
       let response;
-      if (eventData.repeat?.type) {
-        const eventDataList = generateRecurringEvents(eventData);
-        response = await fetch('/api/events-list', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ events: eventDataList }),
-        });
-      } else if (editing) {
+
+      if (editing) {
+        if (eventData.repeat?.type) {
+          eventData.repeat = {
+            count: undefined,
+            endCondition: undefined,
+            endDate: undefined,
+            interval: 0,
+            type: 'none',
+          };
+        }
         response = await fetch(`/api/events/${(eventData as Event).id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(eventData),
         });
       } else {
-        response = await fetch('/api/events', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(eventData),
-        });
+        if (eventData.repeat?.type) {
+          const eventDataList = generateRecurringEvents(eventData);
+          response = await fetch('/api/events-list', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ events: eventDataList }),
+          });
+        } else {
+          response = await fetch('/api/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(eventData),
+          });
+        }
       }
 
       if (!response.ok) {
