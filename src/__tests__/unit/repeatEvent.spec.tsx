@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent, { UserEvent } from '@testing-library/user-event';
 import { ReactElement } from 'react';
 
-import { setupMockHandlerCreation } from '../../__mocks__/handlersUtils';
+import { setupMockHandlerCreation, setupMockHandlerUpdating } from '../../__mocks__/handlersUtils';
 import App from '../../App';
 import { Event } from '../../types';
 
@@ -58,9 +58,10 @@ const saveSchedule = async (user: UserEvent, form: Omit<Event, 'id' | 'notificat
 };
 
 describe('반복 유형 선택', () => {
-  it('일정 생성 시 반복 유형을 선택할 수 있다.', () => {
-    setup(<App />);
+  it('일정 생성 시 반복 유형을 선택할 수 있다.', async () => {
+    const { user } = setup(<App />);
 
+    await user.click(screen.getByLabelText('반복 설정'));
     const repeatSelect = screen.getByLabelText('반복 유형');
 
     expect(repeatSelect).toBeInTheDocument();
@@ -95,6 +96,7 @@ describe('반복 유형 선택', () => {
     expect(optionsValue).toContain('매일');
     expect(optionsValue).toContain('매주');
     expect(optionsValue).toContain('매월');
+    expect(optionsValue).toContain('매년');
   });
 });
 
@@ -155,5 +157,35 @@ describe('반복 일정 생성', () => {
 
     expect(events.length).toBe(3);
     expect(repeatInfo.length).toBe(3);
+  });
+});
+
+describe('반복 일정 수정', () => {
+  it('사용자가 반복 일정을 수정하면 해당 일정은 단일 일정으로 변경된다.', async () => {
+    setupMockHandlerUpdating();
+    const { user } = setup(<App />);
+
+    const editButtons = await screen.findAllByLabelText('Edit event');
+    const editButton = editButtons[editButtons.length - 1];
+
+    await user.click(editButton);
+
+    await user.clear(screen.getByLabelText('제목'));
+    await user.type(screen.getByLabelText('제목'), '반복 일정 아니지롱');
+    await user.clear(screen.getByLabelText('설명'));
+    await user.type(screen.getByLabelText('설명'), '단일 일정이지롱');
+
+    await user.click(screen.getByTestId('event-submit-button'));
+
+    const eventList = within(screen.getByTestId('event-list'));
+    const updatedEvent = eventList.getByText('반복 일정 아니지롱').closest('div[role="event"]');
+
+    screen.debug(updatedEvent as HTMLElement);
+
+    expect(updatedEvent).not.toBeNull();
+    expect(within(updatedEvent as HTMLElement).getByText('단일 일정이지롱')).toBeInTheDocument();
+    expect(
+      within(updatedEvent as HTMLElement).queryByText('반복: 1일마다 (종료: 2024-10-03)')
+    ).not.toBeInTheDocument();
   });
 });
