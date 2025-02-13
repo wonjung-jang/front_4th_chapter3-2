@@ -3,9 +3,9 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent, { UserEvent } from '@testing-library/user-event';
 import { ReactElement } from 'react';
 
-import { setupMockHandlerCreation, setupMockHandlerUpdating } from '../../__mocks__/handlersUtils';
-import App from '../../App';
-import { Event } from '../../types';
+import { setupMockHandlerCreation, setupMockHandlerUpdating } from '../__mocks__/handlersUtils';
+import App from '../App';
+import { Event } from '../types';
 
 const setup = (element: ReactElement) => {
   const user = userEvent.setup();
